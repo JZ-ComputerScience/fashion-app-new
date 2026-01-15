@@ -9,6 +9,10 @@ from flask_cors import CORS  # 处理跨域请求
 from flask_migrate import Migrate  # 数据库迁移工具
 from config import config  # 导入配置
 import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 
 def create_app(config_name='default'):
@@ -31,17 +35,27 @@ def create_app(config_name='default'):
     CORS(app)
     
     # 延迟导入模型，避免循环导入问题
-    from models import db
+    from database_models import db
     # 初始化数据库
     db.init_app(app)
     # 初始化数据库迁移工具
     migrate = Migrate(app, db)
     
     # 延迟导入路由蓝图，避免循环导入问题
-    from routes import main_bp, api_bp
+    from api_routes import main_bp, api_bp
     # 注册蓝图
     app.register_blueprint(main_bp)  # 注册主路由蓝图（无前缀）
     app.register_blueprint(api_bp, url_prefix='/api')  # 注册API路由蓝图（/api前缀）
+    
+    # 显式注册一个 /upload 路由到主蓝图，防止被 api_bp 的 /api/upload 覆盖或混淆
+    # 虽然 main_bp 已经注册了 /upload，但为了保险起见，我们确保它工作正常
+    # 注意：upload 页面路由已经在 api_routes.py 的 main_bp 中定义了
+    
+    # 打印所有注册的路由，用于调试
+    print("=== Registered Routes ===")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule} -> {rule.endpoint}")
+    print("=========================")
     
     # 创建上传目录（如果不存在）
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -56,7 +70,7 @@ if __name__ == '__main__':
     
     # 应用上下文管理器，确保在应用上下文中执行数据库操作
     with app.app_context():
-        from models import db
+        from database_models import db
         # 创建所有数据库表
         db.create_all()
     

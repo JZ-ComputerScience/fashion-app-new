@@ -22,15 +22,12 @@ def test_api_endpoints():
     # 测试页面路由
     test_pages = [
         "/",
-        "/upload",
-        "/recommendation",
-        "/tryon"
+        "/upload"
     ]
     
     # 测试API路由
     test_api = [
-        "/api/recommend",
-        "/api/weather"
+        "/api/upload"
     ]
     
     print("测试页面路由：")
@@ -49,8 +46,11 @@ def test_api_endpoints():
     print("\n测试API路由：")
     for api in test_api:
         try:
+            # 对于POST请求的API，使用GET请求会返回405 Method Not Allowed
+            # 或者如果是上传API，可能需要构造Multipart请求
+            # 这里简单测试端点是否存在
             response = requests.get(f"{base_url}{api}")
-            if response.status_code in [200, 400]:  # 400是预期的，因为缺少参数
+            if response.status_code in [200, 400, 405]:
                 print(f"✓ {api} - 成功访问")
             else:
                 print(f"✗ {api} - 访问失败，状态码：{response.status_code}")

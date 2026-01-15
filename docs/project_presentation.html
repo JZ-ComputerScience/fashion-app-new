@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fashion AI App - 项目介绍</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- Animate.css -->
+    <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
+    
+    <style>
+        /* 自定义样式 */
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #ec4899;
+            --dark-color: #1e293b;
+            --light-color: #f1f5f9;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            line-height: 1.6;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            backdrop-filter: blur(10px);
+            background-color: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 渐变背景 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.2);
+        }
+        
+        /* 代码块样式 */
+        pre {
+            background-color: #0f172a;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        code {
+            font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+            font-size: 0.875rem;
+        }
+        
+        /* 滚动动画 */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+        
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* 渐变文字 */
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem !important;
+            }
+            
+            h2 {
+                font-size: 1.5rem !important;
+            }
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        
+        /* 目录样式 */
+        .toc-item {
+            transition: all 0.3s ease;
+        }
+        
+        .toc-item:hover {
+            transform: translateX(10px);
+            color: #6366f1;
+        }
+        
+        /* 模块图标 */
+        .module-icon {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .module-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="text-xl font-bold gradient-text">
+                        <i class="fa fa-star-o mr-2"></i>Fashion AI App
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-8">
+                        <a href="#overview" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">项目概述</a>
+                        <a href="#architecture" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">架构设计</a>
+                        <a href="#directory" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">目录结构</a>
+                        <a href="#modules" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">核心模块</a>
+                        <a href="#features" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">技术亮点</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 英雄区 -->
+    <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-5xl font-bold mb-6 animate__animated animate__fadeInDown">
+                <span class="gradient-text">Fashion AI App</span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-10 max-w-3xl mx-auto animate__animated animate__fadeInUp">
+                基于人工智能的时尚穿搭推荐系统，融合图像识别、个性化推荐和虚拟试穿技术
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 animate__animated animate__fadeInUp">
+                <a href="#overview" class="btn gradient-bg px-8 py-3 rounded-full text-white font-semibold shadow-lg hover:shadow-xl">
+                    了解更多
+                </a>
+                <a href="https://github.com/yourusername/fashion-ai-app" target="_blank" class="btn bg-gray-800 border border-gray-700 px-8 py-3 rounded-full text-white font-semibold shadow-lg hover:shadow-xl">
+                    <i class="fa fa-github mr-2"></i>GitHub 仓库
+                </a>
+            </div>
+            
+            <!-- 技术栈标签 -->
+            <div class="mt-16 flex flex-wrap justify-center gap-3 animate__animated animate__fadeInUp">
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">Python</span>
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">Flask</span>
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">AI/ML</span>
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">计算机视觉</span>
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">RESTful API</span>
+                <span class="px-4 py-2 bg-gray-800 rounded-full text-sm font-medium">SQLAlchemy</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 项目概述 -->
+    <section id="overview" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-12 text-center scroll-animate">
+                <span class="gradient-text">项目概述与核心价值主张</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div class="scroll-animate">
+                    <h3 class="text-xl font-semibold mb-4">项目背景</h3>
+                    <p class="text-gray-300 mb-6">
+                        随着人工智能技术的快速发展，时尚行业正在经历数字化转型。Fashion AI App 旨在利用先进的计算机视觉和机器学习技术，为用户提供个性化的时尚穿搭解决方案。
+                    </p>
+                    
+                    <h3 class="text-xl font-semibold mb-4">核心价值主张</h3>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span><strong>智能图像识别：</strong>自动识别用户上传的衣物，分析衣物属性和风格</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span><strong>个性化推荐：</strong>基于用户特征、天气情况和场景需求，生成精准的穿搭建议</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span><strong>虚拟试穿体验：</strong>通过AI技术实现虚拟试穿，减少购物决策时间</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-green-500 mt-1 mr-3"></i>
+                            <span><strong>电商整合：</strong>直接链接淘宝商品，实现从推荐到购买的闭环</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="chart-container scroll-animate">
+                    <canvas id="valueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 架构设计 -->
+    <section id="architecture" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-12 text-center scroll-animate">
+                <span class="gradient-text">项目整体架构设计</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 架构图 -->
+                <div class="lg:col-span-2 scroll-animate">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-6 text-center">系统架构图</h3>
+                        <div class="bg-gray-800 rounded-lg p-6">
+                            <!-- 架构可视化 -->
+                            <div class="flex flex-col items-center justify-center">
+                                <!-- 前端层 -->
+                                <div class="w-full max-w-md bg-blue-900 bg-opacity-30 rounded-lg p-4 mb-4">
+                                    <h4 class="text-center font-semibold text-blue-400 mb-2">前端层</h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="bg-blue-800 bg-opacity-50 rounded p-2 text-center text-sm">HTML/CSS</div>
+                                        <div class="bg-blue-800 bg-opacity-50 rounded p-2 text-center text-sm">JavaScript</div>
+                                        <div class="bg-blue-800 bg-opacity-50 rounded p-2 text-center text-sm">模板引擎</div>
+                                        <div class="bg-blue-800 bg-opacity-50 rounded p-2 text-center text-sm">响应式设计</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- API网关 -->
+                                <div class="w-16 h-16 bg-purple-900 bg-opacity-30 rounded-full flex items-center justify-center font-semibold text-purple-400 mb-4">
+                                    API
+                                </div>
+                                
+                                <!-- 应用层 -->
+                                <div class="w-full max-w-2xl bg-green-900 bg-opacity-30 rounded-lg p-4 mb-4">
+                                    <h4 class="text-center font-semibold text-green-400 mb-2">应用层</h4>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">Flask 框架</div>
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">路由管理</div>
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">请求处理</div>
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">用户认证</div>
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">响应生成</div>
+                                        <div class="bg-green-800 bg-opacity-50 rounded p-2 text-center text-sm">错误处理</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 服务层 -->
+                                <div class="w-full max-w-3xl bg-yellow-900 bg-opacity-30 rounded-lg p-4 mb-4">
+                                    <h4 class="text-center font-semibold text-yellow-400 mb-2">服务层</h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        <div class="bg-yellow-800 bg-opacity-50 rounded p-2 text-center text-sm">图像识别服务</div>
+                                        <div class="bg-yellow-800 bg-opacity-50 rounded p-2 text-center text-sm">推荐服务</div>
+                                        <div class="bg-yellow-800 bg-opacity-50 rounded p-2 text-center text-sm">虚拟试穿服务</div>
+                                        <div class="bg-yellow-800 bg-opacity-50 rounded p-2 text-center text-sm">天气服务</div>
+                                        <div class="bg-yellow-800 bg-opacity-50 rounded p-2 text-center text-sm">淘宝服务</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 数据层 -->
+                                <div class="w-full max-w-md bg-red-900 bg-opacity-30 rounded-lg p-4">
+                                    <h4 class="text-center font-semibold text-red-400 mb-2">数据层</h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="bg-red-800 bg-opacity-50 rounded p-2 text-center text-sm">SQLAlchemy</div>
+                                        <div class="bg-red-800 bg-opacity-50 rounded p-2 text-center text-sm">SQLite</div>
+                                        <div class="bg-red-800 bg-opacity-50 rounded p-2 text-center text-sm">文件存储</div>
+                                        <div class="bg-red-800 bg-opacity-50 rounded p-2 text-center text-sm">环境配置</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 架构说明 -->
+                <div class="space-y-6 scroll-animate">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4">架构特点</h3>
+                        <ul class="space-y-3 text-gray-300">
+                            <li class="flex items-start">
+                                <i class="fa fa-cubes text-purple-500 mt-1 mr-3"></i>
+                                <span><strong>模块化设计：</strong>清晰的分层架构，各模块职责明确，便于扩展和维护</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-exchange text-blue-500 mt-1 mr-3"></i>
+                                <span><strong>RESTful API：</strong>前后端分离，通过标准API进行通信</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-shield text-green-500 mt-1 mr-3"></i>
+                                <span><strong>安全可靠：</strong>实现了完善的错误处理和异常捕获机制</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fa fa-bolt text-yellow-500 mt-1 mr-3"></i>
+                                <span><strong>高性能：</strong>异步处理和优化的数据库查询，确保系统响应迅速</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4">技术栈</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                <i class="fa fa-python text-2xl text-blue-500 mb-2"></i>
+                                <p class="text-sm">Python 3.8+</p>
+                            </div>
+                            <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                <i class="fa fa-flask text-2xl text-green-500 mb-2"></i>
+                                <p class="text-sm">Flask</p>
+                            </div>
+                            <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                <i class="fa fa-database text-2xl text-orange-500 mb-2"></i>
+                                <p class="text-sm">SQLAlchemy</p>
+                            </div>
+                            <div class="bg-gray-800 p-3 rounded-lg text-center">
+                                <i class="fa fa-code text-2xl text-purple-500 mb-2"></i>
+                                <p class="text-sm">HTML/CSS/JS</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 目录结构 -->
+    <section id="directory" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-12 text-center scroll-animate">
+                <span class="gradient-text">详细的项目目录结构说明</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- 目录树 -->
+                <div class="scroll-animate">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-6">项目目录树</h3>
+                        <div class="bg-gray-800 rounded-lg p-4 overflow-auto max-h-96">
+<pre class="text-sm text-gray-300">fashion-ai-app/
+├── <span class="text-blue-400">services/</span>           # 核心业务服务
+│   ├── __init__.py
+│   ├── <span class="text-green-400">image_recognition_service.py</span>  # 图像识别服务
+│   ├── <span class="text-green-400">recommendation_service.py</span>     # 推荐服务
+│   ├── <span class="text-green-400">taobao_service.py</span>             # 淘宝API服务
+│   ├── <span class="text-green-400">virtual_tryon_service.py</span>       # 虚拟试穿服务
+│   └── <span class="text-green-400">weather_service.py</span>            # 天气API服务
+├── <span class="text-blue-400">static/</span>             # 静态资源
+│   ├── <span class="text-purple-400">css/</span>
+│   │   └── style.css
+│   └── <span class="text-purple-400">js/</span>
+│       ├── recommendation.js
+│       ├── tryon.js
+│       └── upload.js
+├── <span class="text-blue-400">templates/</span>           # HTML模板
+│   ├── index.html
+│   ├── recommendation.html
+│   ├── tryon.html
+│   └── upload.html
+├── <span class="text-blue-400">tests/</span>              # 测试文件
+│   ├── test_end_to_end.py
+│   ├── test_image_recognition.py
+│   ├── test_recommendation.py
+│   └── test_virtual_tryon.py
+├── <span class="text-blue-400">utils/</span>              # 工具函数
+│   ├── __init__.py
+│   └── file_utils.py
+├── <span class="text-yellow-400">.env.example</span>         # 环境变量示例
+├── <span class="text-yellow-400">.gitignore</span>          # Git忽略配置
+├── <span class="text-green-400">app.py</span>               # 应用入口
+├── <span class="text-green-400">config.py</span>            # 配置文件
+├── <span class="text-green-400">models.py</span>            # 数据库模型
+├── <span class="text-green-400">requirements.txt</span>      # 依赖清单
+└── <span class="text-green-400">routes.py</span>            # 路由配置</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 目录说明 -->
+                <div class="space-y-6 scroll-animate">
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4">核心目录说明</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-medium text-blue-400">services/</h4>
+                                <p class="text-sm text-gray-300">包含所有核心业务逻辑，如图像识别、推荐算法、虚拟试穿等</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-blue-400">static/</h4>
+                                <p class="text-sm text-gray-300">存放前端静态资源，包括CSS样式和JavaScript脚本</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-blue-400">templates/</h4>
+                                <p class="text-sm text-gray-300">HTML模板文件，使用Flask模板引擎渲染</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-blue-400">tests/</h4>
+                                <p class="text-sm text-gray-300">自动化测试文件，确保系统功能正常</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-blue-400">utils/</h4>
+                                <p class="text-sm text-gray-300">通用工具函数，如文件处理、日期格式化等</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6">
+                        <h3 class="text-xl font-semibold mb-4">核心文件说明</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-medium text-green-400">app.py</h4>
+                                <p class="text-sm text-gray-300">应用程序入口，初始化Flask应用，配置数据库和路由</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-green-400">routes.py</h4>
+                                <p class="text-sm text-gray-300">定义所有路由，包括页面路由和API路由</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-green-400">models.py</h4>
+                                <p class="text-sm text-gray-300">定义数据库模型，使用SQLAlchemy ORM</p>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-green-400">config.py</h4>
+                                <p class="text-sm text-gray-300">应用配置文件，包含不同环境的配置选项</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 核心模块 -->
+    <section id="modules" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-12 text-center scroll-animate">
+                <span class="gradient-text">各关键模块的功能作用与技术实现</span>
+            </h2>
+            
+            <!-- 模块列表 -->
+            <div class="space-y-16">
+                <!-- 图像识别服务 -->
+                <div class="scroll-animate">
+                    <div class="flex items-center mb-6">
+                        <div class="module-icon">
+                            <i class="fa fa-camera"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold">图像识别服务</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">功能说明</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>衣物检测与识别</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>衣物属性分析</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>风格分类</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>置信度评估</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">核心代码解析</h4>
+                                <pre><code class="language-python text-gray-300">class ImageRecognitionService:
+    def __init__(self):
+        # 初始化模型和配置
+        self.model = self._load_model()
+        
+    def _load_model(self):
+        # 加载预训练的图像识别模型
+        # 这里可以使用TensorFlow、PyTorch或第三方API
+        pass
+    
+    def analyze_image(self, image_path):
+        """
+        分析图像，识别衣物和属性
+        
+        Args:
+            image_path: 图像文件路径
+            
+        Returns:
+            dict: 包含衣物识别结果的字典
+        """
+        # 读取图像
+        image = self._read_image(image_path)
+        
+        # 调用模型进行预测
+        predictions = self.model.predict(image)
+        
+        # 解析预测结果
+        clothing_items = []
+        for pred in predictions:
+            clothing_item = {
+                "item_type": pred["type"],
+                "color": pred["color"],
+                "style": pred["style"],
+                "material": pred["material"],
+                "confidence": pred["confidence"]
+            }
+            clothing_items.append(clothing_item)
+        
+        # 分析整体风格
+        overall_style = self._analyze_overall_style(clothing_items)
+        
+        return {
+            "clothing_items": clothing_items,
+            "overall_style": overall_style
+        }</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 推荐服务 -->
+                <div class="scroll-animate">
+                    <div class="flex items-center mb-6">
+                        <div class="module-icon">
+                            <i class="fa fa-lightbulb-o"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold">推荐服务</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">功能说明</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>个性化穿搭推荐</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>基于场景的推荐</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>天气自适应推荐</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>搭配评分</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">核心代码解析</h4>
+                                <pre><code class="language-python text-gray-300">class RecommendationService:
+    def __init__(self):
+        # 初始化推荐模型和配置
+        self.model = self._load_recommendation_model()
+        
+    def generate_recommendations(self, user_profile, clothing_items, scene, weather_data):
+        """
+        生成个性化穿搭推荐
+        
+        Args:
+            user_profile: 用户档案
+            clothing_items: 用户现有衣物
+            scene: 使用场景
+            weather_data: 天气数据
+            
+        Returns:
+            list: 推荐结果列表
+        """
+        # 分析用户风格偏好
+        user_style = self._analyze_user_style(user_profile)
+        
+        # 根据天气和场景过滤推荐项
+        filtered_items = self._filter_by_context(scene, weather_data)
+        
+        # 生成推荐结果
+        recommendations = self.model.predict(
+            user_profile=user_profile,
+            existing_items=clothing_items,
+            filtered_items=filtered_items,
+            context={"scene": scene, "weather": weather_data}
+        )
+        
+        # 对推荐结果进行排序和评分
+        ranked_recommendations = self._rank_recommendations(recommendations)
+        
+        return ranked_recommendations[:5]  # 返回Top 5推荐</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 虚拟试穿服务 -->
+                <div class="scroll-animate">
+                    <div class="flex items-center mb-6">
+                        <div class="module-icon">
+                            <i class="fa fa-magic"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold">虚拟试穿服务</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">功能说明</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>衣物与人体匹配</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>实时虚拟试穿</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>多角度展示</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>高分辨率渲染</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">核心代码解析</h4>
+                                <pre><code class="language-python text-gray-300">class VirtualTryonService:
+    def __init__(self):
+        # 初始化虚拟试穿模型
+        self.api_key = os.environ.get("ALIBABA_CLOUD_API_KEY")
+        self.api_secret = os.environ.get("ALIBABA_CLOUD_API_SECRET")
+        
+    def generate_tryon(self, person_image, clothing_image):
+        """
+        生成虚拟试穿效果图
+        
+        Args:
+            person_image: 人物图片路径
+            clothing_image: 服装图片路径
+            
+        Returns:
+            str: 试穿结果图片路径
+        """
+        # 调用阿里云百炼API进行虚拟试穿
+        client = self._init_alibaba_client()
+        
+        # 读取图片文件
+        person_data = self._read_image_file(person_image)
+        clothing_data = self._read_image_file(clothing_image)
+        
+        # 构建请求参数
+        request_params = {
+            "person_image": base64.b64encode(person_data).decode("utf-8"),
+            "clothing_image": base64.b64encode(clothing_data).decode("utf-8"),
+            "tryon_type": "upper_body"  # 可选择：upper_body, lower_body, full_body
+        }
+        
+        # 发送请求
+        response = client.invoke("virtual-tryon", request_params)
+        
+        # 处理响应
+        if response["success"]:
+            result_image_data = base64.b64decode(response["result_image"])
+            result_path = self._save_result_image(result_image_data)
+            return result_path
+        else:
+            raise Exception(f"Virtual tryon failed: {response['error']}")</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 天气服务 -->
+                <div class="scroll-animate">
+                    <div class="flex items-center mb-6">
+                        <div class="module-icon">
+                            <i class="fa fa-cloud"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold">天气服务</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">功能说明</h4>
+                                <ul class="space-y-2 text-gray-300">
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>实时天气查询</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>天气预报</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>天气数据解析</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fa fa-check text-blue-500 mt-1 mr-2"></i>
+                                        <span>影响穿搭的天气因子提取</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <div class="card p-6">
+                                <h4 class="text-lg font-semibold mb-4">核心代码解析</h4>
+                                <pre><code class="language-python text-gray-300">class WeatherService:
+    def __init__(self):
+        self.api_key = os.environ.get("WEATHER_API_KEY")
+        self.base_url = "https://api.weatherapi.com/v1"
+        
+    def get_weather(self, location):
+        """
+        获取指定城市的天气数据
+        
+        Args:
+            location: 城市名称
+            
+        Returns:
+            dict: 天气数据字典
+        """
+        # 构建API请求URL
+        url = f"{self.base_url}/current.json?key={self.api_key}&q={location}&aqi=no"
+        
+        # 发送HTTP请求
+        response = requests.get(url)
+        response.raise_for_status()  # 抛出HTTP错误
+        
+        # 解析响应数据
+        data = response.json()
+        
+        # 提取关键天气信息
+        weather_data = {
+            "location": data["location"]["name"],
+            "temperature": data["current"]["temp_c"],
+            "condition": data["current"]["condition"]["text"],
+            "humidity": data["current"]["humidity"],
+            "wind_speed": data["current"]["wind_kph"],
+            "feels_like": data["current"]["feelslike_c"]
+        }
+        
+        return weather_data</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 技术亮点 -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-3xl font-bold mb-12 text-center scroll-animate">
+                <span class="gradient-text">项目特色与技术亮点展示</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- 亮点1 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-purple-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-bolt text-3xl text-purple-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">高效的API设计</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        采用RESTful API设计风格，实现了前后端分离，便于系统扩展和第三方集成。所有API都经过优化，响应迅速，支持高并发访问。
+                    </p>
+                </div>
+                
+                <!-- 亮点2 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-blue-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-shield text-3xl text-blue-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">完善的错误处理</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        实现了全面的错误处理机制，包括输入验证、异常捕获和友好的错误提示。系统能够自动恢复从错误状态，确保服务的高可用性。
+                    </p>
+                </div>
+                
+                <!-- 亮点3 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-green-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-database text-3xl text-green-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">灵活的数据库设计</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        使用SQLAlchemy ORM框架，支持多种数据库后端。数据库模型设计合理，关系清晰，便于数据扩展和查询优化。
+                    </p>
+                </div>
+                
+                <!-- 亮点4 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-yellow-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-code-fork text-3xl text-yellow-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">模块化架构</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        采用模块化设计，各功能模块独立封装，便于维护和扩展。服务层与业务逻辑分离，支持热插拔和独立部署。
+                    </p>
+                </div>
+                
+                <!-- 亮点5 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-red-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-mobile text-3xl text-red-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">响应式设计</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        前端页面采用响应式设计，适配各种屏幕尺寸。使用现代化的CSS框架和JavaScript库，提供流畅的用户体验。
+                    </p>
+                </div>
+                
+                <!-- 亮点6 -->
+                <div class="card p-6 scroll-animate">
+                    <div class="text-center mb-6">
+                        <div class="inline-block p-4 bg-indigo-900 bg-opacity-30 rounded-full mb-4">
+                            <i class="fa fa-graduation-cap text-3xl text-indigo-400"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold">AI驱动的智能推荐</h3>
+                    </div>
+                    <p class="text-gray-300 text-center">
+                        融合了多种AI技术，包括图像识别、机器学习和深度学习。推荐算法能够不断学习用户偏好，提供越来越精准的推荐结果。
+                    </p>
+                </div>
+            </div>
+            
+            <!-- 技术栈统计 -->
+            <div class="mt-16 scroll-animate">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-6 text-center">技术栈使用统计</h3>
+                    <div class="chart-container">
+                        <canvas id="techStackChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="py-12 px-4 sm:px-6 lg:px-8 bg-gray-950">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="text-xl font-bold gradient-text">
+                        <i class="fa fa-star-o mr-2"></i>Fashion AI App
+                    </div>
+                    <p class="text-gray-400 mt-2">基于人工智能的时尚穿搭推荐系统</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="https://github.com/yourusername/fashion-ai-app" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-github text-2xl"></i>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-twitter text-2xl"></i>
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fa fa-linkedin text-2xl"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+                <p>&copy; 2024 Fashion AI App. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 滚动动画
+        function handleScrollAnimation() {
+            const elements = document.querySelectorAll('.scroll-animate');
+            
+            elements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 150;
+                
+                if (elementTop < window.innerHeight - elementVisible) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', handleScrollAnimation);
+        handleScrollAnimation(); // 初始检查
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // 价值主张图表
+        const valueCtx = document.getElementById('valueChart').getContext('2d');
+        const valueChart = new Chart(valueCtx, {
+            type: 'radar',
+            data: {
+                labels: ['智能识别', '个性化推荐', '虚拟试穿', '电商整合', '用户体验'],
+                datasets: [{
+                    label: '核心价值',
+                    data: [90, 85, 80, 75, 95],
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        pointLabels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            backdropColor: 'transparent'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 技术栈统计图表
+        const techStackCtx = document.getElementById('techStackChart').getContext('2d');
+        const techStackChart = new Chart(techStackCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Python', 'Flask', 'HTML/CSS', 'JavaScript', 'SQLAlchemy', 'AI/ML'],
+                datasets: [{
+                    data: [35, 25, 15, 10, 10, 5],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#8b5cf6',
+                        '#ec4899'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleColor: 'rgba(255, 255, 255, 0.9)',
+                        bodyColor: 'rgba(255, 255, 255, 0.8)',
+                        borderColor: 'rgba(99, 102, 241, 0.3)',
+                        borderWidth: 1
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+    </script>
+</body>
+</html>

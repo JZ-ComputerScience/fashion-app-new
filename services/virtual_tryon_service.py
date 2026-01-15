@@ -1,145 +1,286 @@
-# -*- coding: utf-8 -*-
-"""
-虚拟试穿服务
-调用阿里云百炼OutfitAnyone API，实现衣物虚拟试穿功能
-"""
-
 import os
+import dashscope
+from dashscope import ImageSynthesis
+from http import HTTPStatus
+import time
+import logging
 import requests
-import base64
-import json
-from typing import Dict
+from pathlib import Path
+from flask import current_app
+from urllib.parse import unquote
+import mimetypes
+import oss2
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class VirtualTryonService:
-    """
-    虚拟试穿服务类
-    提供衣物虚拟试穿功能，调用阿里云百炼OutfitAnyone API
-    """
-    
     def __init__(self):
-        """
-        初始化虚拟试穿服务，加载API密钥和配置
-        """
-        # 从环境变量获取API密钥
-        self.api_key = os.environ.get('BAILIAN_API_KEY', '')
+        self.api_key = os.environ.get("DASHSCOPE_API_KEY")
+        if not self.api_key:
+            logger.warning("DASHSCOPE_API_KEY is not set. Virtual Try-on will fail.")
+        else:
+            dashscope.api_key = self.api_key
         
-        # 阿里云百炼API URL
-        self.api_url = 'https://bailian.cn-beijing.aliyuncs.com/v2/services/aigc/image-generation/generation'
-    
-    def generate_tryon(self, person_image_path: str, clothing_image_path: str) -> Dict:
-        """
-        生成虚拟试穿效果图
-        
-        Args:
-            person_image_path: 人物照片文件路径
-            clothing_image_path: 服装照片文件路径
+        # OSS Config
+        self.oss_access_key_id = os.environ.get('ALIYUN_OSS_ACCESS_KEY_ID')
+        self.oss_access_key_secret = os.environ.get('ALIYUN_OSS_ACCESS_KEY_SECRET')
+        self.oss_bucket_name = os.environ.get('ALIYUN_OSS_BUCKET_NAME')
+        self.oss_endpoint = os.environ.get('ALIYUN_OSS_ENDPOINT')
+
+    def _upload_file_to_oss(self, file_path):
+        """将文件上传到阿里云OSS"""
+        try:
+            print(f"DEBUG: Starting OSS upload for {file_path}")
+            if not os.path.exists(file_path):
+                logger.error(f"File not found for upload: {file_path}")
+                print(f"DEBUG: File not found: {file_path}")
+                return None
             
-        Returns:
-            Dict: 虚拟试穿结果，包含成功状态和结果图片URL
-            结构：
-            {
-                "success": true,
-                "image_url": "试穿结果图片URL",
-                "task_id": "任务ID"
-            }
+            if not all([self.oss_access_key_id, self.oss_access_key_secret, self.oss_bucket_name, self.oss_endpoint]):
+                logger.error("OSS credentials not fully configured.")
+                print("DEBUG: OSS credentials missing")
+                return None
+
+            # Initialize OSS Bucket
+            endpoint = self.oss_endpoint
+            if not endpoint.startswith('http'):
+                endpoint = f"https://{endpoint}"
+            
+            print(f"DEBUG: OSS Endpoint: {endpoint}, Bucket: {self.oss_bucket_name}")
+            
+            auth = oss2.Auth(self.oss_access_key_id, self.oss_access_key_secret)
+            bucket = oss2.Bucket(auth, endpoint, self.oss_bucket_name)
+
+            file_name = Path(file_path).name
+            # Use a 'temp/' prefix to keep bucket organized
+            key = f"temp/{int(time.time())}_{file_name}"
+            
+            # Determine Content-Type
+            content_type, _ = mimetypes.guess_type(file_path)
+            headers = {}
+            if content_type:
+                headers['Content-Type'] = content_type
+                logger.info(f"Detected Content-Type: {content_type}")
+            
+            logger.info(f"Uploading {file_path} to OSS bucket {self.oss_bucket_name} with key {key}")
+            print(f"DEBUG: Uploading to key {key} with headers {headers}")
+            
+            # Upload with headers
+            result = bucket.put_object_from_file(key, file_path, headers=headers)
+            print(f"DEBUG: Upload finished. Status: {result.status}")
+            
+            if result.status != 200:
+                print(f"DEBUG: Upload failed with status {result.status}")
+                return None
+            
+            # Construct public URL
+            # Standard OSS URL format: https://bucket-name.endpoint/key
+            # Note: Since the bucket is now Public Read, we can use the direct URL without signing.
+            # This is simpler and avoids any URL encoding/decoding issues with DashScope.
+            
+            # Remove protocol from endpoint if present to ensure clean construction
+            clean_endpoint = self.oss_endpoint.replace("http://", "").replace("https://", "")
+            oss_url = f"https://{self.oss_bucket_name}.{clean_endpoint}/{key}"
+            
+            # 兼容代码：如果用户改回私有 Bucket，这里可以取消注释恢复签名逻辑
+            # oss_url = bucket.sign_url('GET', key, 172800)
+            # if '%' in oss_url: ...
+            
+            logger.info(f"File uploaded successfully: {oss_url}")
+            print(f"DEBUG: OSS URL generated: {oss_url}")
+            return oss_url
+        except Exception as e:
+            logger.error(f"Error uploading file to OSS: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            print(f"DEBUG: Exception in _upload_file_to_oss: {str(e)}")
+            traceback.print_exc()
+            return None
+
+    def _resolve_local_url(self, url):
+        """
+        Resolve a URL to a local file path if it's a local URL.
+        Returns the OSS URL if uploaded, or the original URL if not local/upload failed.
+        """
+        if not url:
+            return url
+            
+        logger.info(f"Resolving URL: {url}")
+        print(f"DEBUG: Resolving URL: {url}")
+        
+        # Check if it's a local URL (e.g., /uploads/xxx or http://localhost...)
+        local_path = None
+        
+        try:
+            # 简化逻辑：只要包含 /uploads/，就尝试去查找本地文件
+            if '/uploads/' in url:
+                # Extract filename from URL
+                filename = unquote(url.split('/uploads/')[-1])
+                # Remove query parameters if any
+                if '?' in filename:
+                    filename = filename.split('?')[0]
+                
+                candidate_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                print(f"DEBUG: Candidate local path: {candidate_path}")
+                
+                if os.path.exists(candidate_path):
+                    local_path = candidate_path
+            
+            if local_path:
+                logger.info(f"Identified local path: {local_path}")
+                print(f"DEBUG: Identified local file: {local_path}")
+                
+                # Check if we should upload
+                print(f"DEBUG: Uploading local file to OSS...")
+                oss_url = self._upload_file_to_oss(local_path)
+                
+                if oss_url:
+                    print(f"DEBUG: Resolved to OSS URL: {oss_url}")
+                    return oss_url
+                else:
+                    logger.warning("Failed to upload local file, using original URL (likely will fail)")
+                    print("DEBUG: Upload failed, returning original URL")
+                    return url
+            else:
+                # Not a local file or file not found
+                # If it's a remote URL (http/https), we assume it's accessible or already on OSS
+                return url
+                    
+        except Exception as e:
+             logger.error(f"Error resolving local url: {str(e)}")
+             print(f"DEBUG: Error resolving local url: {str(e)}")
+             import traceback
+             traceback.print_exc()
+        
+        return url
+
+    def generate_tryon(self, person_image_url, clothing_image_url=None, clothing_type='top', top_garment_url=None, bottom_garment_url=None):
+        """
+        Submit a virtual try-on task to Aliyun OutfitAnyone.
         """
         try:
-            # 1. 将人物图片转换为base64格式
-            with open(person_image_path, 'rb') as f:
-                person_base64 = base64.b64encode(f.read()).decode('utf-8')
+            # Check if API key is set
+            if not self.api_key:
+                return {"success": False, "error": "API Key missing"}
+
+            logger.info(f"Submitting OutfitAnyone task. Type: {clothing_type}")
             
-            # 2. 将服装图片转换为base64格式
-            with open(clothing_image_path, 'rb') as f:
-                clothing_base64 = base64.b64encode(f.read()).decode('utf-8')
+            # Resolve local URLs to OSS URLs
+            person_image_url = self._resolve_local_url(person_image_url)
             
-            # 3. 构建API请求参数
+            if clothing_image_url:
+                clothing_image_url = self._resolve_local_url(clothing_image_url)
+            
+            if top_garment_url:
+                top_garment_url = self._resolve_local_url(top_garment_url)
+                
+            if bottom_garment_url:
+                bottom_garment_url = self._resolve_local_url(bottom_garment_url)
+
+            # 构造参数
+            # 使用原生 HTTP 请求替代 SDK，以确保 Header 正确传递
+            url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "X-DashScope-OssResourceResolve": "enable",
+                "X-DashScope-Async": "enable"
+            }
+            
             payload = {
-                'model': 'outfit-anyone',  # 使用的模型名称
-                'input': {
-                    'person_image': f'data:image/jpeg;base64,{person_base64}',  # 人物图片
-                    'clothing_image': f'data:image/jpeg;base64,{clothing_base64}',  # 服装图片
-                    'prompt': 'high quality, realistic, natural fitting',  # 生成提示词
-                    'n': 1,  # 生成结果数量
-                    'size': '1024x1024'  # 生成图片尺寸
+                "model": "aitryon-plus",
+                "input": {
+                    "person_image_url": person_image_url
+                },
+                "parameters": {
+                    "resolution": -1,
+                    "restore_face": True,
+                    "prompt": "virtual try on"
                 }
             }
             
-            # 4. 设置请求头
-            headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {self.api_key}'  # 认证信息
-            }
+            if clothing_type == 'top':
+                payload["input"]["top_garment_url"] = clothing_image_url
+            elif clothing_type == 'bottom':
+                payload["input"]["bottom_garment_url"] = clothing_image_url
+            elif clothing_type == 'full':
+                payload["input"]["top_garment_url"] = top_garment_url
+                payload["input"]["bottom_garment_url"] = bottom_garment_url
             
-            # 5. 发送POST请求调用API
-            response = requests.post(
-                self.api_url,
-                json=payload,
-                headers=headers,
-                timeout=60  # 虚拟试穿可能需要较长时间，设置超时为60秒
-            )
+            logger.info(f"Sending request to DashScope API: {url}")
+            # print(f"DEBUG: Payload: {json.dumps(payload, indent=2)}")
             
-            # 6. 处理API响应
-            if response.status_code == 200:
-                result = response.json()
-                # 检查API返回结果
-                if 'output' in result and 'results' in result['output']:
-                    # 返回成功结果
+            response = requests.post(url, headers=headers, json=payload)
+            
+            if response.status_code == HTTPStatus.OK:
+                resp_data = response.json()
+                if 'output' in resp_data and 'task_id' in resp_data['output']:
+                    task_id = resp_data['output']['task_id']
+                    logger.info(f"Task submitted successfully. Task ID: {task_id}")
                     return {
-                        'success': True,
-                        'image_url': result['output']['results'][0]['url'],
-                        'task_id': result.get('request_id', '')
+                        "success": True, 
+                        "task_id": task_id,
+                        "status": "PENDING"
                     }
-            
-            # 7. API调用失败，返回错误信息
-            return {
-                'success': False,
-                'error': '虚拟试穿生成失败'
-            }
-            
+                else:
+                    logger.error(f"Unexpected response format: {resp_data}")
+                    return {"success": False, "error": "Unknown response format from API"}
+            else:
+                logger.error(f"Failed to submit task: {response.status_code}, {response.text}")
+                return {
+                    "success": False, 
+                    "error": f"{response.status_code}: {response.text}"
+                }
+                
         except Exception as e:
-            # 捕获所有异常，记录日志并返回错误信息
-            print(f'虚拟试穿错误: {str(e)}')
-            return {
-                'success': False,
-                'error': str(e)
-            }
-    
-    def get_task_status(self, task_id: str) -> Dict:
+            logger.error(f"Exception in generate_tryon: {str(e)}")
+            return {"success": False, "error": str(e)}
+
+    def check_task_status(self, task_id):
         """
-        查询虚拟试穿任务状态（适用于异步调用场景）
-        
-        Args:
-            task_id: 任务ID
-            
-        Returns:
-            Dict: 任务状态信息
-            结构：
-            {
-                "status": "running",  # 任务状态：running, done, failed
-                "result": {}  # 任务结果（如果任务已完成）
-            }
+        Check the status of a submitted task.
         """
+        if task_id == "direct_result":
+             return {"success": True, "status": "SUCCEEDED"}
+
         try:
-            # 构建查询URL
-            url = f'{self.api_url}/{task_id}'
-            
-            # 设置请求头
+            url = f"https://dashscope.aliyuncs.com/api/v1/tasks/{task_id}"
             headers = {
-                'Authorization': f'Bearer {self.api_key}'
+                "Authorization": f"Bearer {self.api_key}"
             }
             
-            # 发送GET请求查询任务状态
-            response = requests.get(url, headers=headers, timeout=10)
+            response = requests.get(url, headers=headers)
             
-            # 处理API响应
-            if response.status_code == 200:
-                return response.json()
-            
-            # API调用失败，返回默认状态
-            return {'status': 'failed'}
-            
+            if response.status_code == HTTPStatus.OK:
+                resp_data = response.json()
+                task_status = resp_data.get('output', {}).get('task_status', 'UNKNOWN')
+                
+                logger.info(f"Task status check: {task_status}")
+                result = {
+                    "success": True,
+                    "status": task_status,
+                }
+                
+                if task_status == 'SUCCEEDED':
+                    output = resp_data.get('output', {})
+                    # 优先获取 image_url (官方文档标准字段)
+                    # 其次尝试 result_image_url (部分旧模型字段)
+                    # 最后尝试 results 列表 (通用格式)
+                    result["result_url"] = (
+                        output.get('image_url') or 
+                        output.get('result_image_url') or 
+                        (output.get('results', [{}])[0].get('url'))
+                    )
+                    logger.info(f"Task succeeded. Result URL: {result['result_url']}")
+                elif task_status == 'FAILED':
+                    result["error"] = resp_data.get('output', {}).get('message', 'Unknown error')
+                    
+                return result
+            else:
+                return {"success": False, "error": f"{response.status_code}: {response.text}"}
+                
         except Exception as e:
-            # 捕获所有异常，记录日志并返回错误状态
-            print(f'获取任务状态错误: {str(e)}')
-            return {'status': 'failed'}
+            logger.error(f"Exception in check_task_status: {str(e)}")
+            return {"success": False, "error": str(e)}

@@ -32,46 +32,42 @@ class ImageRecognitionService:
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
         )
     
-    def analyze_image(self, image_path):
+    def analyze_image(self, image_path, weather_data=None):
         """
-        分析图片，识别衣物和人物特征
+        分析图片，识别衣物和人物特征，并根据天气生成推荐
         
         Args:
             image_path: 图片文件路径
+            weather_data: 天气数据字典（可选）
             
         Returns:
-            dict: 包含衣物识别结果、人物特征和整体风格的字典
-            结构：
-            {
-                "clothing_items": [衣物识别结果数组],
-                "body_features": {人物特征}, 
-                "overall_style": "整体风格"
-            }
+            dict: 包含衣物识别结果、人物特征、整体风格和推荐建议的字典
         """
         try:
             # 将图片转换为base64格式，用于API调用
             with open(image_path, 'rb') as f:
                 image_data = base64.b64encode(f.read()).decode('utf-8')
             
-            # 构建API请求消息
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_data}"
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": """请分析这张照片中人物的穿搭，提取以下信息：
+            # 构建Prompt
+            prompt_text = """请分析这张照片中人物的穿搭，提取以下信息：
 1. 衣物识别：上衣、下装、外套、鞋子的款式、颜色、材质、风格
 2. 人物特征：体型（如梨形、苹果形、沙漏形等）、身高比例、肤色类型
 3. 体态特点：姿态、气质等
 4. 整体风格：休闲、商务、运动、复古等
+"""
+            
+            # 如果提供了天气数据，增加推荐要求
+            if weather_data:
+                weather_info = f"当前天气：{weather_data.get('text', '未知')}，温度：{weather_data.get('temp', '未知')}°C，体感：{weather_data.get('feels_like', '未知')}°C，湿度：{weather_data.get('humidity', '未知')}%"
+                prompt_text += f"""
+5. 穿搭推荐：结合识别出的人物特征（体型、肤色、气质）和{weather_info}，给出具体的穿搭建议。建议应包括：
+   - 适合当前天气的衣物搭配（保暖/透气/防雨等）
+   - 适合人物体型的款式建议（扬长避短）
+   - 适合肤色的颜色建议
+   - 整体风格的优化建议
+"""
 
+            prompt_text += """
 请以JSON格式返回结果，包含以下字段：
 {
     "clothing_items": [
@@ -90,8 +86,29 @@ class ImageRecognitionService:
         "skin_tone": "肤色类型",
         "posture": "体态特点"
     },
-    "overall_style": "整体风格"
+    "overall_style": "整体风格",
+    "recommendation": {
+        "weather_advice": "针对天气的建议",
+        "style_advice": "针对体型和风格的建议",
+        "color_advice": "针对肤色的建议",
+        "outfit_suggestion": "具体的一套推荐搭配"
+    }
 }"""
+
+            # 构建API请求消息
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_data}"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt_text
                         }
                     ]
                 }
@@ -127,8 +144,11 @@ class ImageRecognitionService:
             # 提取JSON部分（处理可能的非JSON前缀或后缀）
             start = response_text.find('{')
             end = response_text.rfind('}') + 1
-            json_str = response_text[start:end]
-            return json.loads(json_str)
+            if start != -1 and end != -1:
+                json_str = response_text[start:end]
+                return json.loads(json_str)
+            else:
+                raise ValueError("未找到JSON内容")
         except Exception as e:
             # 如果解析失败，返回包含原始响应的默认结构
             print(f'JSON解析错误: {str(e)}')
@@ -136,5 +156,6 @@ class ImageRecognitionService:
                 'clothing_items': [],
                 'body_features': {},
                 'overall_style': '',
+                'recommendation': {},
                 'raw_response': response_text
             }

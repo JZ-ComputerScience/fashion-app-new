@@ -8,6 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- 引入自定义CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .form-select {
+            background-position: right 0.75rem center;
+        }
+    </style>
 </head>
 <body>
     <!-- 导航栏 -->
@@ -18,8 +23,6 @@
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/">首页</a></li>
                     <li class="nav-item"><a class="nav-link active" href="/upload">上传照片</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/recommendation">穿搭推荐</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/tryon">虚拟试穿</a></li>
                 </ul>
             </div>
         </div>
@@ -31,11 +34,47 @@
             <!-- 居中显示 -->
             <div class="col-md-8 offset-md-2">
                 <!-- 页面标题 -->
-                <h2 class="text-center mb-4">上传您的照片</h2>
+                <h2 class="text-center mb-4">上传您的照片进行分析</h2>
                 
                 <!-- 上传表单卡片 -->
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
+                        <!-- 地区选择与天气展示 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">选择当前位置</label>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <select class="form-select form-select-sm" id="provinceSelect">
+                                            <option value="">省份</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-4">
+                                        <select class="form-select form-select-sm" id="citySelect" disabled>
+                                            <option value="">城市</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-4">
+                                        <select class="form-select form-select-sm" id="districtSelect" disabled>
+                                            <option value="">区县</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-text text-muted" id="locationStatus">请选择完整的省市区信息</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">实时天气 & 时间</label>
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                                        <div id="weatherInfo" class="text-muted">
+                                            <small>请先选择城市</small>
+                                        </div>
+                                        <div id="timeDisplay" class="fw-bold text-primary">--:--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 上传表单，id用于JavaScript操作 -->
                         <form id="uploadForm">
                             <div class="mb-3">
@@ -66,8 +105,107 @@
                     </div>
                 </div>
 
-                <!-- 分析结果区域，默认隐藏 -->
+                <!-- 虚拟试穿区域 (替换原手动上传区域) -->
+                <div id="virtualTryOnSection" class="mt-4" style="display: none;">
+                    <div class="card border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">👗 虚拟试穿</h5>
+                            <small>Step 2</small>
+                        </div>
+                        <div class="card-body">
+                            
+                            <!-- 1. 确认模特信息 -->
+                            <div class="mb-4">
+                                <h6 class="card-title text-muted mb-3">当前模特</h6>
+                                <div class="d-flex align-items-center bg-light p-3 rounded">
+                                    <div style="width: 80px; height: 80px; overflow: hidden;" class="rounded me-3 border">
+                                        <img id="currentModelPreview" src="" alt="Model" style="width: 100%; height: 100%; object-fit: cover;">
+                                    </div>
+                                    <div>
+                                        <div class="badge bg-success mb-1">已就绪</div>
+                                        <div class="small text-muted">模特照片已自动上传至云端，可重复使用</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- 2. 上传衣物 -->
+                            <div class="mb-4">
+                                <h6 class="card-title text-muted mb-3">选择衣物</h6>
+                                
+                                <!-- 试穿模式选择 -->
+                                <div class="btn-group w-100 mb-3" role="group">
+                                    <input type="radio" class="btn-check" name="tryonMode" id="modeTop" value="top" checked>
+                                    <label class="btn btn-outline-primary" for="modeTop">仅上装</label>
+
+                                    <input type="radio" class="btn-check" name="tryonMode" id="modeBottom" value="bottom">
+                                    <label class="btn btn-outline-primary" for="modeBottom">仅下装</label>
+
+                                    <input type="radio" class="btn-check" name="tryonMode" id="modeFull" value="full">
+                                    <label class="btn btn-outline-primary" for="modeFull">全身 (上下装)</label>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- 上装上传 -->
+                                    <div class="col-md-12" id="topUploadContainer">
+                                        <label class="form-label small">上传上装图片 (自动上传至OSS)</label>
+                                        <div class="input-group">
+                                            <input type="file" class="form-control" id="topGarmentInput" accept="image/*">
+                                        </div>
+                                        <div class="mt-2" id="topGarmentStatus" style="display: none;"></div>
+                                    </div>
+                                    
+                                    <!-- 下装上传 -->
+                                    <div class="col-md-12" id="bottomUploadContainer" style="display: none;">
+                                        <label class="form-label small">上传下装图片 (自动上传至OSS)</label>
+                                        <div class="input-group">
+                                            <input type="file" class="form-control" id="bottomGarmentInput" accept="image/*">
+                                        </div>
+                                        <div class="mt-2" id="bottomGarmentStatus" style="display: none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. 开始试穿 -->
+                            <div class="d-grid">
+                                <button class="btn btn-primary btn-lg" id="startAutoTryOnBtn" disabled>
+                                    ✨ 开始生成试穿效果
+                                </button>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 虚拟试穿结果，默认隐藏 -->
+                <div id="tryonResult" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">✨ 试穿成功</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div id="tryonStatus" class="alert alert-info" style="display: none;"></div>
+                            <div id="tryonImageContainer" style="display: none;">
+                                <img id="tryonImage" class="img-fluid rounded shadow mb-3" style="max-height: 500px;">
+                                <div>
+                                    <button class="btn btn-success" onclick="window.open(document.getElementById('tryonImage').src)">
+                                        <i class="fa fa-download"></i> 查看大图
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 隐藏的 URL 存储字段 -->
+                <input type="hidden" id="modelOssUrl">
+                <input type="hidden" id="topOssUrl">
+                <input type="hidden" id="bottomOssUrl">
+
+                <!-- 保留原有的分析结果区域 -->
                 <div id="analysisResult" class="mt-4" style="display: none;">
+
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">分析结果</h5>
@@ -76,12 +214,19 @@
                         <div class="card-body" id="analysisContent">
                         </div>
                     </div>
-                    
-                    <!-- 跳转按钮 -->
-                    <div class="mt-3 text-center">
-                        <a href="/recommendation" class="btn btn-success btn-lg">获取穿搭推荐</a>
-                    </div>
                 </div>
+
+                <!-- 隐藏不需要的旧区域，但保留DOM以免报错 -->
+                <div style="display: none;">
+                    <!-- OSS上传工具模块 -->
+                    <div class="card mt-4 mb-4 border-info" id="oldOssTool">
+                        <!-- ... -->
+                    </div>
+                    <!-- 手动上传衣物区域 -->
+                    <div id="manualGarmentUpload"></div>
+                </div>
+
+
             </div>
         </div>
     </div>

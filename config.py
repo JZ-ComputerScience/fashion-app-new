@@ -36,9 +36,16 @@ class Config:
     
     # 外部API密钥配置
     DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY', '')  # 阿里云千问API密钥
-    BAILIAN_API_KEY = os.environ.get('BAILIAN_API_KEY', '')  # 阿里云百炼API密钥
-    WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', '')  # 天气API密钥
-    TAOBAO_API_KEY = os.environ.get('TAOBAO_API_KEY', '')  # 淘宝API密钥
+    # 兼容两种环境变量命名：QWEATHER_API_KEY 或 WEATHER_API_KEY
+    QWEATHER_API_KEY = os.environ.get('QWEATHER_API_KEY') or os.environ.get('WEATHER_API_KEY', '')
+    # 阿里云OSS配置
+    ALIYUN_OSS_ACCESS_KEY_ID = os.environ.get('ALIYUN_OSS_ACCESS_KEY_ID', '')
+    ALIYUN_OSS_ACCESS_KEY_SECRET = os.environ.get('ALIYUN_OSS_ACCESS_KEY_SECRET', '')
+    ALIYUN_OSS_BUCKET_NAME = os.environ.get('ALIYUN_OSS_BUCKET_NAME', '')
+    ALIYUN_OSS_ENDPOINT = os.environ.get('ALIYUN_OSS_ENDPOINT', '')
+
+    # 和风天气API Host（新版用户需要配置，例如：xxx.qweatherapi.com）
+    QWEATHER_API_HOST = os.environ.get('QWEATHER_API_HOST', '')
     
     # Session配置
     SESSION_COOKIE_HTTPONLY = True  # Session Cookie仅HTTP可用

@@ -1,0 +1,168 @@
+{
+  "version": "1.0",
+  "timestamp": "2025-12-31T10:00:00Z",
+  "confidence_score": 0.95,
+  "human_features": {
+    "body": {
+      "body_type": "hourglass",
+      "height_range": "160-165cm",
+      "weight_range": "50-55kg",
+      "shoulder_width": "medium",
+      "waist_circumference": "65-70cm",
+      "hip_circumference": "90-95cm",
+      "leg_shape": "straight",
+      "arm_shape": "slender"
+    },
+    "skin": {
+      "skin_tone": "warm",
+      "skin_color": "light_medium",
+      "undertone": "yellow"
+    },
+    "face": {
+      "hairstyle": "long_straight",
+      "hair_color": "black",
+      "makeup_style": "natural",
+      "face_shape": "oval"
+    }
+  },
+  "clothing_items": [
+    {
+      "id": "item_001",
+      "category": "top",
+      "subcategory": "blouse",
+      "location": "upper_body",
+      "confidence": 0.98,
+      "appearance": {
+        "color": {
+          "primary": "red",
+          "secondary": null,
+          "shade": "bright",
+          "tone": "warm"
+        },
+        "pattern": "solid",
+        "material": "silk",
+        "texture": "smooth",
+        "transparency": "opaque"
+      },
+      "style": {
+        "silhouette": "fitted",
+        "sleeve_length": "short",
+        "collar_type": "v-neck",
+        "length": "hip_length",
+        "details": ["ruffles", "buttons"]
+      },
+      "fashion_attributes": {
+        "style": "elegant",
+        "occasion": "business_casual",
+        "season": "spring",
+        "trendiness": "moderate"
+      }
+    },
+    {
+      "id": "item_002",
+      "category": "bottom",
+      "subcategory": "pants",
+      "location": "lower_body",
+      "confidence": 0.96,
+      "appearance": {
+        "color": {
+          "primary": "navy_blue",
+          "secondary": null,
+          "shade": "dark",
+          "tone": "cool"
+        },
+        "pattern": "solid",
+        "material": "cotton_blend",
+        "texture": "smooth",
+        "transparency": "opaque"
+      },
+      "style": {
+        "silhouette": "straight",
+        "fit": "tailored",
+        "length": "ankle_length",
+        "waist_type": "mid_rise",
+        "details": ["belt_loops", "side_pockets"]
+      },
+      "fashion_attributes": {
+        "style": "professional",
+        "occasion": "business",
+        "season": "all_year",
+        "trendiness": "classic"
+      }
+    },
+    {
+      "id": "item_003",
+      "category": "footwear",
+      "subcategory": "heels",
+      "location": "feet",
+      "confidence": 0.92,
+      "appearance": {
+        "color": {
+          "primary": "black",
+          "secondary": null,
+          "shade": "dark",
+          "tone": "neutral"
+        },
+        "pattern": "solid",
+        "material": "leather",
+        "texture": "smooth",
+        "transparency": "opaque"
+      },
+      "style": {
+        "heel_height": "medium",
+        "toe_shape": "pointed",
+        "closure": "slip_on",
+        "details": []
+      },
+      "fashion_attributes": {
+        "style": "formal",
+        "occasion": "business",
+        "season": "all_year",
+        "trendiness": "classic"
+      }
+    },
+    {
+      "id": "item_004",
+      "category": "accessory",
+      "subcategory": "handbag",
+      "location": "right_hand",
+      "confidence": 0.88,
+      "appearance": {
+        "color": {
+          "primary": "beige",
+          "secondary": null,
+          "shade": "light",
+          "tone": "neutral"
+        },
+        "pattern": "solid",
+        "material": "leather",
+        "texture": "grainy",
+        "transparency": "opaque"
+      },
+      "style": {
+        "shape": "structured",
+        "size": "medium",
+        "closure": "zip",
+        "details": ["metal_hardware"]
+      },
+      "fashion_attributes": {
+        "style": "classic",
+        "occasion": "business_casual",
+        "season": "all_year",
+        "trendiness": "classic"
+      }
+    }
+  ],
+  "overall_assessment": {
+    "color_coordination": "good",
+    "style_consistency": "excellent",
+    "occasion_appropriateness": "business_casual",
+    "seasonal_appropriateness": "spring",
+    "body_flattery": "excellent"
+  },
+  "detection_metadata": {
+    "model_version": "qianwen-v1.0",
+    "image_resolution": "1920x1080",
+    "processing_time": "2.5s"
+  }
+}
